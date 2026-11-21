@@ -1,0 +1,59 @@
+plugins {
+    id 'com.android.application'
+}
+
+// 签名信息来源（按优先级）：
+// 1. 环境变量（GitHub Actions 里由 Secrets 注入）
+// 2. 本机 ~/.android/copyimage-keystore/ 下的 release.jks + keystore.properties
+// 都没有时 release 包退回 debug 签名，保证别人 clone 下来也能直接编译
+def keystoreDir = new File(System.getProperty('user.home'), '.android/copyimage-keystore')
+def localProps = new Properties()
+def localPropsFile = new File(keystoreDir, 'keystore.properties')
+if (localPropsFile.exists()) localPropsFile.withInputStream { localProps.load(it) }
+
+def storeFilePath = System.getenv('SIGNING_STORE_FILE') ?: (new File(keystoreDir, 'release.jks').exists() ? new File(keystoreDir, 'release.jks').path : null)
+def storePass = System.getenv('SIGNING_STORE_PASSWORD') ?: localProps.getProperty('storePassword')
+def keyAliasName = System.getenv('SIGNING_KEY_ALIAS') ?: localProps.getProperty('keyAlias')
+def keyPass = System.getenv('SIGNING_KEY_PASSWORD') ?: localProps.getProperty('keyPassword')
+def hasReleaseKey = storeFilePath && storePass && keyAliasName && keyPass
+
+android {
+    namespace 'com.chx.copyimage'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'com.chx.copyimage'
+        minSdk 28
+        targetSdk 36
+        // CI 打 tag 时会通过环境变量覆盖版本号
+        versionCode((System.getenv('VERSION_CODE') ?: '1') as int)
+        versionName(System.getenv('VERSION_NAME') ?: '1.0.0')
+    }
+
+    signingConfigs {
+        release {
+            if (hasReleaseKey) {
+                storeFile file(storeFilePath)
+                storePassword storePass
+                keyAlias keyAliasName
+                keyPassword keyPass
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig hasReleaseKey ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    lint {
+        checkReleaseBuilds false
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

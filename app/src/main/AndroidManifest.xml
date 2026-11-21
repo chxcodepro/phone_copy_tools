@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true">
+
+        <!-- 分享入口：在相册里“分享”时出现“复制到剪贴板” -->
+        <activity
+            android:name=".CopyActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:label="@string/share_label"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+        </activity>
+
+        <!-- 桌面图标：显示使用说明 -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.DeviceDefault.Dialog.Alert">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- 把复制下来的图片提供给要粘贴的 App 读取 -->
+        <provider
+            android:name=".ImageProvider"
+            android:authorities="com.chx.copyimage.images"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+    </application>
+</manifest>
